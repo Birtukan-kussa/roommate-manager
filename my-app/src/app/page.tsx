@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function LandingPage() {
   return (
     <div style={{ maxWidth: "700px", margin: "80px auto", textAlign: "center" }}>
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>🏠 Roommate Manager</h1>
+      <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>Roommate Manager</h1>
       <p style={{ color: "#888", marginBottom: "40px" }}>
         Manage chores, schedules, shared expenses, and shopping lists with your roommates.
       </p>
