@@ -13,7 +13,26 @@ import {
   GraphQLFloat,
   GraphQLBoolean,
   GraphQLEnumType,
+  GraphQLError,
 } from "graphql";
+
+// ---------- AUTH GUARDS ----------
+const requireAuth = (context) => {
+  if (!context.req.user) {
+    throw new GraphQLError("Not authenticated. Please log in.", {
+      extensions: { code: "UNAUTHENTICATED" },
+    });
+  }
+};
+
+const requireAdmin = (context) => {
+  requireAuth(context);
+  if (context.req.user.role !== "admin") {
+    throw new GraphQLError("Not authorized. Admin access required.", {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+};
 
 // ---------- ENUMS ----------
 const ChoreStatusEnum = new GraphQLEnumType({
@@ -175,7 +194,8 @@ const RootMutation = new GraphQLObjectType({
         email: { type: GraphQLString },
         color: { type: GraphQLString },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAuth(context);
         const roommate = new Roommate({
           name: args.name,
           email: args.email,
@@ -188,7 +208,8 @@ const RootMutation = new GraphQLObjectType({
     deleteRoommate: {
       type: RoommateType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         return Roommate.findByIdAndDelete(args.id);
       },
     },
@@ -201,7 +222,8 @@ const RootMutation = new GraphQLObjectType({
         email: { type: GraphQLString },
         color: { type: GraphQLString },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         const updateFields = {};
         if (args.name !== undefined) updateFields.name = args.name;
         if (args.email !== undefined) updateFields.email = args.email;
@@ -226,7 +248,8 @@ const RootMutation = new GraphQLObjectType({
         dueDate: { type: GraphQLString },
         recurring: { type: RecurringEnum, defaultValue: "None" },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAuth(context);
         const chore = new Chore({
           title: args.title,
           description: args.description,
@@ -242,7 +265,8 @@ const RootMutation = new GraphQLObjectType({
     deleteChore: {
       type: ChoreType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         return Chore.findByIdAndDelete(args.id);
       },
     },
@@ -258,7 +282,8 @@ const RootMutation = new GraphQLObjectType({
         dueDate: { type: GraphQLString },
         recurring: { type: RecurringEnum },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         const updateFields = {};
         if (args.title !== undefined) updateFields.title = args.title;
         if (args.description !== undefined) updateFields.description = args.description;
@@ -284,7 +309,8 @@ const RootMutation = new GraphQLObjectType({
         paidBy: { type: GraphQLNonNull(GraphQLID) },
         splitBetween: { type: new GraphQLList(GraphQLID) },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAuth(context);
         const expense = new Expense({
           title: args.title,
           amount: args.amount,
@@ -298,7 +324,8 @@ const RootMutation = new GraphQLObjectType({
     deleteExpense: {
       type: ExpenseType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         return Expense.findByIdAndDelete(args.id);
       },
     },
@@ -312,7 +339,8 @@ const RootMutation = new GraphQLObjectType({
         paidBy: { type: GraphQLID },
         splitBetween: { type: new GraphQLList(GraphQLID) },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         const updateFields = {};
         if (args.title !== undefined) updateFields.title = args.title;
         if (args.amount !== undefined) updateFields.amount = args.amount;
@@ -334,7 +362,8 @@ const RootMutation = new GraphQLObjectType({
         name: { type: GraphQLNonNull(GraphQLString) },
         addedBy: { type: GraphQLID },
       },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAuth(context);
         const item = new ShoppingItem({
           name: args.name,
           addedBy: args.addedBy,
@@ -346,7 +375,8 @@ const RootMutation = new GraphQLObjectType({
     deleteShoppingItem: {
       type: ShoppingItemType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args) {
+      resolve(parent, args, context) {
+        requireAdmin(context);
         return ShoppingItem.findByIdAndDelete(args.id);
       },
     },
@@ -354,7 +384,8 @@ const RootMutation = new GraphQLObjectType({
     togglePurchased: {
       type: ShoppingItemType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      async resolve(parent, args) {
+      async resolve(parent, args, context) {
+        requireAuth(context);
         const item = await ShoppingItem.findById(args.id);
         if (!item) throw new Error("Item not found");
         item.purchased = !item.purchased;

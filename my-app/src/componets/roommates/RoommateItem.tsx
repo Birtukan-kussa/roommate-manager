@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { UPDATE_ROOMMATE, DELETE_ROOMMATE } from "@/graphql/roommateMutations";
 import { GET_ROOMMATES } from "@/graphql/roommateQueries";
+import { useAuth } from "@/lib/AuthContext";
 
 type Roommate = {
   id: string;
@@ -17,6 +18,7 @@ export default function RoommateItem({ roommate }: { roommate: Roommate }) {
   const [name, setName] = useState(roommate.name);
   const [email, setEmail] = useState(roommate.email || "");
   const [color, setColor] = useState(roommate.color);
+  const { isAdmin } = useAuth();
 
   const [updateRoommate] = useMutation(UPDATE_ROOMMATE, {
     refetchQueries: [{ query: GET_ROOMMATES }],
@@ -60,8 +62,12 @@ export default function RoommateItem({ roommate }: { roommate: Roommate }) {
       <div style={{ width: "16px", height: "16px", borderRadius: "50%", backgroundColor: roommate.color }} />
       <span style={{ flex: 1 }}>{roommate.name}</span>
       <span style={{ color: "#888", fontSize: "0.9em" }}>{roommate.email}</span>
-      <button onClick={() => setIsEditing(true)}>Edit</button>
-      <button onClick={handleDelete}>Delete</button>
+      {isAdmin && (
+        <>
+          <button onClick={() => setIsEditing(true)}>Edit</button>
+          <button onClick={handleDelete}>Delete</button>
+        </>
+      )}
     </div>
   );
 }

@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -17,8 +20,25 @@ export default function LoginForm() {
       return;
     }
 
-    // TODO: replace with actual GraphQL/REST login call
-    console.log("Logging in with", { email, password });
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:9000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      login({ _id: data._id, name: data.name, email: data.email }, data.token);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -42,9 +62,10 @@ export default function LoginForm() {
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <button
           type="submit"
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          disabled={loading}
+          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          Log In
+          {loading ? "Logging in..." : "Log In"}
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-gray-400">

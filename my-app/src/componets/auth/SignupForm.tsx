@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function SignupForm() {
   const [name, setName] = useState("");
@@ -9,6 +10,8 @@ export default function SignupForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,8 +27,25 @@ export default function SignupForm() {
       return;
     }
 
-    // TODO: replace with actual GraphQL/REST signup call
-    console.log("Signing up with", { name, email, password });
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:9000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      login({ _id: data._id, name: data.name, email: data.email }, data.token);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -63,9 +83,10 @@ export default function SignupForm() {
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <button
           type="submit"
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          disabled={loading}
+          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          Sign Up
+          {loading ? "Creating account..." : "Sign Up"}
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-gray-400">
