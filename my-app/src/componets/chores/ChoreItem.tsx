@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/lib/AuthContext";
 import type { Chore } from "./ChoreList";
 
 type Props = {
@@ -9,6 +10,8 @@ type Props = {
 };
 
 export default function ChoreItem({ chore, onToggle, onDelete }: Props) {
+  const { isAdmin } = useAuth();
+
   return (
     <div className="flex items-center justify-between rounded border border-gray-700 px-4 py-2">
       <div className="flex items-center gap-3">
@@ -22,12 +25,14 @@ export default function ChoreItem({ chore, onToggle, onDelete }: Props) {
         </span>
         <span className="text-sm text-gray-400">({chore.assignedTo})</span>
       </div>
-      <button
-        onClick={() => onDelete(chore.id)}
-        className="text-red-400 hover:text-red-500 text-sm"
-      >
-        Remove
-      </button>
+      {isAdmin && (
+        <button
+          onClick={() => onDelete(chore.id)}
+          className="text-red-400 hover:text-red-500 text-sm"
+        >
+          Remove
+        </button>
+      )}
     </div>
   );
 }
