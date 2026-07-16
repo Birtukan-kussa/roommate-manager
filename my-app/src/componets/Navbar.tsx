@@ -20,7 +20,8 @@ export default function Navbar() {
     if (!token) return;
     setInviteLoading(true);
     try {
-      const res = await fetch("http://localhost:9000/api/auth/invite", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
+      const res = await fetch(`${API_URL}/api/auth/invite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

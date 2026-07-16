@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  # ── MongoDB ──────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: roommate-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # ── Backend (Express + GraphQL) ───────────────────────────────────────
+  backend:
+    build:
+      context: ./todo-backend
+    container_name: roommate-backend
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      PORT: "9000"
+      MONGODB_URI: mongodb://mongo:27017/roommate-manager
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-development}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      NODE_ENV: production
+    depends_on:
+      - mongo
+
+  # ── Frontend (Next.js) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./my-app
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:9000}
+    container_name: roommate-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:

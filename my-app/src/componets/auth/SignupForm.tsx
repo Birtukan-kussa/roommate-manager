@@ -26,7 +26,8 @@ export default function SignupForm() {
   useEffect(() => {
     const checkInviteRequirement = async () => {
       try {
-        const res = await fetch("http://localhost:9000/graphql", {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
+        const res = await fetch(`${API_URL}/graphql`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: "{ roommates { id } }" }),
@@ -61,7 +62,8 @@ export default function SignupForm() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:9000/api/auth/register", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
