@@ -630,6 +630,32 @@ const RootMutation = new GraphQLObjectType({
         return true;
       }
     },
+
+    // ----- Public Contact Us Mutation -----
+    submitContactMessage: {
+      type: GraphQLBoolean,
+      args: {
+        name: { type: GraphQLNonNull(GraphQLString) },
+        email: { type: GraphQLNonNull(GraphQLString) },
+        message: { type: GraphQLNonNull(GraphQLString) },
+      },
+      async resolve(parent, args) {
+        const adminEmail = process.env.SMTP_USER || "admin@smartsplit.app";
+        
+        const subject = `SmartSplit Contact Form: ${args.subject || 'New Message'} from ${args.name}`;
+        const messageText = `You have received a new contact message:\n\n` +
+          `Name: ${args.name}\n` +
+          `Email: ${args.email}\n\n` +
+          `Message:\n${args.message}\n\n` +
+          `--\nSent from SmartSplit Public Portal`;
+        
+        const success = await sendNotificationEmail(adminEmail, subject, messageText);
+        if (!success) {
+          throw new Error("Failed to send contact message. If in local development, verify your backend .env file has SMTP configured.");
+        }
+        return true;
+      }
+    },
   },
 });
 

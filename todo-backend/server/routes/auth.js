@@ -96,6 +96,7 @@ router.post("/register", async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        color: user.color,
         token: generateToken(user._id, user.role),
       });
     } else {
@@ -118,6 +119,7 @@ router.post("/login", (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        color: user.color,
         token: generateToken(user._id, user.role),
       });
     });
