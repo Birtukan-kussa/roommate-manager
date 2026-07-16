@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
+import AuthLayout from "@/app/(auth)/layout";
+
+const inputClass =
+  "w-full rounded-md border border-[#DEDBD1] bg-white px-3.5 py-2.5 text-[14px] text-[#14181C] placeholder:text-[#A6A79C] outline-none transition focus:border-[#E2993C] focus:ring-2 focus:ring-[#E2993C]/25";
 
 export default function SignupForm() {
   const [name, setName] = useState("");
@@ -14,7 +18,7 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [inviteRequired, setInviteRequired] = useState(false);
   const [checkingInvite, setCheckingInvite] = useState(true);
-  
+
   const { login } = useAuth();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite") || "";
@@ -28,7 +32,7 @@ export default function SignupForm() {
           body: JSON.stringify({ query: "{ roommates { id } }" }),
         });
         const json = await res.json();
-        
+
         if (json.data && json.data.roommates && json.data.roommates.length > 0) {
           setInviteRequired(true);
         }
@@ -60,11 +64,11 @@ export default function SignupForm() {
       const res = await fetch("http://localhost:9000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          email, 
-          password, 
-          inviteToken: inviteRequired ? inviteToken : undefined 
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          inviteToken: inviteRequired ? inviteToken : undefined,
         }),
       });
       const data = await res.json();
@@ -82,75 +86,152 @@ export default function SignupForm() {
   }
 
   if (checkingInvite) {
-    return <div className="text-center text-gray-400">Verifying registration access...</div>;
+    return (
+      <AuthLayout>
+        <div className="flex items-center gap-2.5 text-[14px] text-[#8B8C82]">
+          <span
+            aria-hidden
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#DEDBD1] border-t-[#14181C]"
+          />
+          Checking registration access…
+        </div>
+      </AuthLayout>
+    );
   }
 
   if (inviteRequired && !inviteToken) {
     return (
-      <div className="text-center py-6">
-        <h1 className="text-2xl font-bold mb-4 text-red-500">Invite Only</h1>
-        <p className="text-gray-300 mb-6">
-          Registration is restricted. You must have a valid invite link from a roommate admin to register.
+      <AuthLayout>
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#C1543C]">
+          Invite only
         </p>
-        <Link href="/login" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-          Go to Login
+        <h1
+          className="mt-2 text-[26px] leading-tight text-[#14181C]"
+          style={{ fontFamily: "var(--font-display, 'Fraunces', Georgia, serif)" }}
+        >
+          This household is closed to new sign-ups
+        </h1>
+        <p className="mt-3 text-[14px] leading-relaxed text-[#5b5c53]">
+          You&apos;ll need a valid invite link from a roommate admin to join. Ask them to send
+          you one from the household settings.
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-[#14181C] px-4 py-2.5 text-[14px] font-medium text-[#F3F3EF] transition hover:bg-[#232a32]"
+        >
+          Go to login
         </Link>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-2 text-center">Sign Up</h1>
+    <AuthLayout>
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B8C82]">
+        Get started
+      </p>
+      <h1
+        className="mt-2 text-[28px] leading-tight text-[#14181C]"
+        style={{ fontFamily: "var(--font-display, 'Fraunces', Georgia, serif)" }}
+      >
+        Set up your account
+      </h1>
+
       {inviteRequired && (
-        <p className="text-xs text-green-400 text-center mb-4 font-semibold">
-          ✓ Valid invite link detected
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#4d7a63]">
+          <span aria-hidden className="h-[6px] w-[6px] rounded-full bg-[#7FA88A]" />
+          Valid invite link detected
         </p>
       )}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="rounded border border-gray-600 bg-transparent px-3 py-2 text-white"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="rounded border border-gray-600 bg-transparent px-3 py-2 text-white"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded border border-gray-600 bg-transparent px-3 py-2 text-white"
-        />
-        <input
-          type="password"
-          placeholder="Confirm password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="rounded border border-gray-600 bg-transparent px-3 py-2 text-white"
-        />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="name" className="text-[13px] text-[#5b5c53]">
+            Full name
+          </label>
+          <input
+            id="name"
+            type="text"
+            autoComplete="name"
+            placeholder="Jordan Lee"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="email" className="text-[13px] text-[#5b5c53]">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="password" className="text-[13px] text-[#5b5c53]">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="confirmPassword" className="text-[13px] text-[#5b5c53]">
+            Confirm password
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+
+        {error && (
+          <p className="rounded-md border border-[#C1543C]/25 bg-[#C1543C]/[0.06] px-3 py-2 text-[13px] text-[#C1543C]">
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-md bg-[#14181C] px-4 py-2.5 text-[14px] font-medium text-[#F3F3EF] transition hover:bg-[#232a32] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Creating account..." : "Sign Up"}
+          {loading && (
+            <span
+              aria-hidden
+              className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F3F3EF]/30 border-t-[#F3F3EF]"
+            />
+          )}
+          {loading ? "Creating account…" : "Create account"}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-gray-400">
+
+      <p className="mt-6 text-center text-[13.5px] text-[#8B8C82]">
         Already have an account?{" "}
-        <Link href="/login" className="text-blue-400 hover:underline">
+        <Link href="/login" className="font-medium text-[#14181C] underline decoration-[#E2993C] decoration-2 underline-offset-2">
           Log in
         </Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 }

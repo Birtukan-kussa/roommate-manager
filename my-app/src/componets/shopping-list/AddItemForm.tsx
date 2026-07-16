@@ -17,17 +17,17 @@ export default function AddItemForm({ onAdd }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2.5">
       <input
         type="text"
         placeholder="Item name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="flex-1 rounded border border-gray-600 bg-transparent px-3 py-2"
+        className="flex-1 rounded-md border border-[#DEDBD1] bg-white px-3.5 py-2.5 text-[14px] text-[#14181C] placeholder:text-[#A6A79C] outline-none transition focus:border-[#E2993C] focus:ring-2 focus:ring-[#E2993C]/25"
       />
       <button
         type="submit"
-        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        className="shrink-0 rounded-md bg-[#14181C] px-4 py-2.5 text-[14px] font-medium text-[#F3F3EF] transition hover:bg-[#232a32]"
       >
         Add
       </button>

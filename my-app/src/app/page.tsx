@@ -7,7 +7,6 @@ import { GET_EXPENSES } from "@/graphql/expenseQueries";
 import { GET_SHOPPING_ITEMS } from "@/graphql/shoppingQueries";
 import { useAuth } from "@/lib/AuthContext";
 import Link from "next/link";
-import { useState } from "react";
 
 type Roommate = {
   id: string;
@@ -38,6 +37,9 @@ type ShoppingItem = {
   purchased: boolean;
 };
 
+const fontDisplay = "var(--font-display, 'Fraunces', Georgia, serif)";
+const fontMono = "var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace)";
+
 export default function HomeDashboard() {
   const { user, loading: authLoading } = useAuth();
 
@@ -48,8 +50,14 @@ export default function HomeDashboard() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-gray-400">Loading your profile…</p>
+      <div className="flex min-h-[50vh] items-center justify-center bg-[#F3F3EF]">
+        <div className="flex items-center gap-2.5 text-[14px] text-[#8B8C82]">
+          <span
+            aria-hidden
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#DEDBD1] border-t-[#14181C]"
+          />
+          Loading your profile…
+        </div>
       </div>
     );
   }
@@ -57,26 +65,80 @@ export default function HomeDashboard() {
   // ── LOGGED OUT VIEW ──
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-5xl font-black tracking-tight mb-4 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-          Roommate Manager
-        </h1>
-        <p className="text-lg text-gray-400 max-w-xl mx-auto mb-10">
-          The premium hub to manage chores, schedules, shared expenses, and shopping lists with your housemates.
-        </p>
-        <div className="flex justify-center gap-4">
-          <Link
-            href="/login"
-            className="rounded bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 transition"
+      <div
+        className="min-h-screen bg-[#F3F3EF]"
+        style={{ fontFamily: "var(--font-body, 'Inter', system-ui, sans-serif)" }}
+      >
+        <div className="mx-auto max-w-2xl px-6 pb-24 pt-24 text-center">
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B8C82]">
+            For roommates who share more than rent
+          </p>
+          <h1
+            className="mt-3 text-[42px] leading-[1.1] text-[#14181C]"
+            style={{ fontFamily: fontDisplay }}
           >
-            Log In
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded border border-gray-700 bg-gray-900 px-6 py-3 font-semibold text-gray-300 hover:bg-gray-800 transition"
-          >
-            Sign Up
-          </Link>
+            Chores and expenses, in one shared ledger.
+          </h1>
+          <p className="mx-auto mt-5 max-w-[42ch] text-[15.5px] leading-relaxed text-[#5b5c53]">
+            Assign chores that rotate on their own. Log what you paid for. See exactly who owes
+            who, without a spreadsheet or a group-chat argument.
+          </p>
+          <div className="mt-9 flex justify-center gap-3">
+            <Link
+              href="/signup"
+              className="rounded-md bg-[#14181C] px-5 py-2.5 text-[14px] font-medium text-[#F3F3EF] transition hover:bg-[#232a32]"
+            >
+              Get started
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-md border border-[#DEDBD1] bg-white px-5 py-2.5 text-[14px] font-medium text-[#14181C] transition hover:border-[#14181C]"
+            >
+              Log in
+            </Link>
+          </div>
+        </div>
+
+        {/* Preview receipt, echoes the auth-page ledger */}
+        <div className="mx-auto max-w-sm px-6 pb-24">
+          <div className="rounded-lg border border-[#DEDBD1] bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.14em] text-[#8B8C82]">
+              <span>This week</span>
+              <span className="h-px flex-1 bg-[#DEDBD1]" />
+            </div>
+            <ul className="mt-4 space-y-0">
+              {[
+                { label: "Rent", detail: "split 3 ways", amount: "$840", settled: false },
+                { label: "Groceries", detail: "Priya paid", amount: "$62", settled: true },
+                { label: "Take out trash", detail: "You · Thu", amount: "", settled: false },
+              ].map((item, i, arr) => (
+                <li
+                  key={item.label}
+                  className={`flex items-center justify-between gap-4 py-3 ${i !== arr.length - 1 ? "border-b border-dashed border-[#DEDBD1]" : ""
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      aria-hidden
+                      className={`h-[7px] w-[7px] rounded-full border ${item.settled ? "border-[#7FA88A] bg-[#7FA88A]" : "border-[#A6A79C] bg-transparent"
+                        }`}
+                    />
+                    <div className="text-left">
+                      <p className={`text-[13.5px] text-[#14181C] ${item.settled ? "text-[#A6A79C] line-through" : ""}`}>
+                        {item.label}
+                      </p>
+                      <p className="text-[11.5px] text-[#8B8C82]">{item.detail}</p>
+                    </div>
+                  </div>
+                  {item.amount && (
+                    <span className="text-[13px] text-[#14181C]" style={{ fontFamily: fontMono }}>
+                      {item.amount}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     );
@@ -153,191 +215,222 @@ export default function HomeDashboard() {
   const loadingAll = roommatesLoading || choresLoading || expensesLoading || shoppingLoading;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Welcome back, {user.name}!
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Here is a status report of your shared house.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-300">
-          <span>Role:</span>
-          <span className={`px-2 py-0.5 rounded-full ${user.role === "admin" ? "bg-yellow-900 text-yellow-300" : "bg-blue-900 text-blue-300"}`}>
-            {user.role.toUpperCase()}
-          </span>
-        </div>
-      </div>
-
-      {loadingAll && (
-        <div className="py-10 text-center">
-          <p className="text-gray-400 animate-pulse">Syncing home status…</p>
-        </div>
-      )}
-
-      {!loadingAll && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* LEFT COLUMN: CHORES & SHOPPING */}
-          <div className="md:col-span-2 space-y-6">
-            
-            {/* YOUR CHORES CARD */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  🧹 Your Pending Chores
-                </h2>
-                <Link href="/chores" className="text-xs text-blue-400 hover:underline">
-                  View All ({chores.length})
-                </Link>
-              </div>
-              
-              {myChores.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4">All caught up! No pending chores assigned to you.</p>
-              ) : (
-                <div className="space-y-3">
-                  {myChores.map((c) => (
-                    <div key={c.id} className="flex justify-between items-center bg-gray-950 border border-gray-850 rounded-lg px-4 py-3">
-                      <div>
-                        <p className="font-semibold text-sm text-gray-200">{c.title}</p>
-                        {c.dueDate && (
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Due: {new Date(Number(c.dueDate)).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-xs bg-yellow-900/60 text-yellow-300 border border-yellow-800 px-2 py-0.5 rounded-full font-medium">
-                        {c.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* SHOPPING LIST CARD */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  🛒 Shopping List Highlights
-                </h2>
-                <Link href="/shopping-list" className="text-xs text-blue-400 hover:underline">
-                  Go to List
-                </Link>
-              </div>
-              
-              {neededItems.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4">Pantries are fully stocked! No items needed.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {neededItems.slice(0, 6).map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 bg-gray-950 border border-gray-850 rounded-lg px-4 py-2.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                      <span className="text-sm text-gray-200 font-medium truncate">{item.name}</span>
-                    </div>
-                  ))}
-                  {neededItems.length > 6 && (
-                    <div className="flex items-center justify-center bg-gray-950 border border-dashed border-gray-800 rounded-lg py-2.5">
-                      <span className="text-xs text-gray-400 font-semibold">
-                        +{neededItems.length - 6} more items
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+    <div
+      className="min-h-screen bg-[#F3F3EF]"
+      style={{ fontFamily: "var(--font-body, 'Inter', system-ui, sans-serif)" }}
+    >
+      <div className="mx-auto max-w-6xl space-y-6 p-6">
+        {/* HEADER SECTION */}
+        <div className="flex flex-col items-start justify-between gap-4 rounded-lg border border-[#DEDBD1] bg-white p-6 shadow-sm md:flex-row md:items-center">
+          <div>
+            <h1
+              className="text-[26px] leading-tight text-[#14181C]"
+              style={{ fontFamily: fontDisplay }}
+            >
+              Welcome back, {user.name}
+            </h1>
+            <p className="mt-1 text-[13.5px] text-[#8B8C82]">
+              Here&apos;s the status of your shared house.
+            </p>
           </div>
+          <div className="flex items-center gap-2 rounded-full border border-[#DEDBD1] px-3 py-1.5 text-[11.5px] font-medium text-[#5b5c53]">
+            <span>Role</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10.5px] tracking-wide ${user.role === "admin" ? "bg-[#E2993C]/15 text-[#c9821f]" : "bg-[#14181C]/[0.06] text-[#14181C]"
+                }`}
+            >
+              {user.role.toUpperCase()}
+            </span>
+          </div>
+        </div>
 
-          {/* RIGHT COLUMN: HOUSEMATES & BALANCE SHEET */}
-          <div className="space-y-6">
-            
-            {/* HOUSE BALANCE SHEET CARD */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
-                💸 Balance Sheet
-              </h2>
-              
-              <div className="flex flex-col items-center bg-gray-950 border border-gray-850 rounded-lg py-5 mb-4 text-center">
-                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                  Net Balance
-                </span>
-                <span className={`text-3xl font-black mt-1 ${netBalance >= 0 ? "text-green-400" : "text-red-400"}`}>
-                  {netBalance >= 0 ? "+" : "-"}${Math.abs(netBalance).toFixed(2)}
-                </span>
+        {loadingAll && (
+          <div className="py-10 text-center">
+            <p className="animate-pulse text-[13.5px] text-[#8B8C82]">Syncing home status…</p>
+          </div>
+        )}
+
+        {!loadingAll && (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {/* LEFT COLUMN: CHORES & SHOPPING */}
+            <div className="space-y-6 md:col-span-2">
+
+              {/* YOUR CHORES CARD */}
+              <div className="rounded-lg border border-[#DEDBD1] bg-white p-6 shadow-sm">
+                <div className="mb-1 flex items-center justify-between">
+                  <h2 className="text-[15px] font-medium text-[#14181C]">Your pending chores</h2>
+                  <Link href="/chores" className="text-[12px] font-medium text-[#8B8C82] hover:text-[#14181C]">
+                    View all ({chores.length})
+                  </Link>
+                </div>
+
+                {myChores.length === 0 ? (
+                  <p className="py-4 text-[13.5px] text-[#8B8C82]">
+                    All caught up — no chores assigned to you right now.
+                  </p>
+                ) : (
+                  <div className="mt-3">
+                    {myChores.map((c, i) => {
+                      const isOverdue = c.dueDate ? Number(c.dueDate) < Date.now() : false;
+                      return (
+                        <div
+                          key={c.id}
+                          className={`flex items-center justify-between gap-4 py-3 ${i !== myChores.length - 1 ? "border-b border-dashed border-[#DEDBD1]" : ""
+                            }`}
+                        >
+                          <div>
+                            <p className="text-[13.5px] text-[#14181C]">{c.title}</p>
+                            {c.dueDate && (
+                              <p className={`mt-0.5 text-[11.5px] ${isOverdue ? "text-[#C1543C]" : "text-[#8B8C82]"}`}>
+                                {isOverdue ? "Overdue · " : "Due "}
+                                {new Date(Number(c.dueDate)).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                          <span className="shrink-0 rounded-full bg-[#E2993C]/15 px-2.5 py-1 text-[11px] font-medium text-[#c9821f]">
+                            {c.status}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Total you are owed:</span>
-                  <span className="font-semibold text-green-400">${totalOwedToMe.toFixed(2)}</span>
+              {/* SHOPPING LIST CARD */}
+              <div className="rounded-lg border border-[#DEDBD1] bg-white p-6 shadow-sm">
+                <div className="mb-1 flex items-center justify-between">
+                  <h2 className="text-[15px] font-medium text-[#14181C]">Shopping list highlights</h2>
+                  <Link href="/shopping-list" className="text-[12px] font-medium text-[#8B8C82] hover:text-[#14181C]">
+                    Go to list
+                  </Link>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Total you owe:</span>
-                  <span className="font-semibold text-red-400">${totalIOwe.toFixed(2)}</span>
-                </div>
-              </div>
 
-              {debtDetails.length > 0 && (
-                <div className="border-t border-gray-800 pt-3 space-y-2 max-h-48 overflow-y-auto">
-                  {debtDetails.map((det, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs">
-                      <span className="text-gray-300 font-medium">{det.roommateName}</span>
-                      <span className={det.isOwed ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
-                        {det.isOwed ? "owes you" : "you owe"} ${det.amount.toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              <Link
-                href="/expenses"
-                className="block text-center rounded bg-gray-800 border border-gray-700 text-xs font-semibold text-gray-200 py-2.5 hover:bg-gray-750 transition mt-4"
-              >
-                Manage Expenses
-              </Link>
-            </div>
-
-            {/* ROOMMATES DIRECTORY CARD */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
-                👥 House Directory
-              </h2>
-              
-              {roommates.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4">No roommates added yet.</p>
-              ) : (
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {roommates.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3">
+                {neededItems.length === 0 ? (
+                  <p className="py-4 text-[13.5px] text-[#8B8C82]">
+                    Pantry&apos;s fully stocked — nothing needed right now.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    {neededItems.slice(0, 6).map((item) => (
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner"
-                        style={{ backgroundColor: r.color || "#4F46E5" }}
+                        key={item.id}
+                        className="flex items-center gap-2.5 rounded-md border border-[#DEDBD1] px-3.5 py-2.5"
                       >
-                        {r.name.charAt(0).toUpperCase()}
+                        <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[#E2993C]" />
+                        <span className="truncate text-[13.5px] text-[#14181C]">{item.name}</span>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-200">{r.name}</p>
-                        <p className="text-xs text-gray-500">{r.email}</p>
+                    ))}
+                    {neededItems.length > 6 && (
+                      <div className="flex items-center justify-center rounded-md border border-dashed border-[#DEDBD1] py-2.5">
+                        <span className="text-[12px] font-medium text-[#8B8C82]">
+                          +{neededItems.length - 6} more items
+                        </span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              <Link
-                href="/roommates"
-                className="block text-center rounded bg-gray-800 border border-gray-700 text-xs font-semibold text-gray-200 py-2.5 hover:bg-gray-750 transition mt-4"
-              >
-                Roommates List
-              </Link>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* RIGHT COLUMN: HOUSEMATES & BALANCE SHEET */}
+            <div className="space-y-6">
+
+              {/* HOUSE BALANCE SHEET CARD */}
+              <div className="rounded-lg border border-[#DEDBD1] bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-[15px] font-medium text-[#14181C]">Balance sheet</h2>
+
+                <div className="mb-5 flex flex-col items-center rounded-md bg-[#F7F7F4] py-5 text-center">
+                  <span className="text-[10.5px] font-medium uppercase tracking-[0.12em] text-[#8B8C82]">
+                    Net balance
+                  </span>
+                  <span
+                    className={`mt-1 text-[30px] ${netBalance >= 0 ? "text-[#4d7a63]" : "text-[#C1543C]"}`}
+                    style={{ fontFamily: fontMono }}
+                  >
+                    {netBalance >= 0 ? "+" : "-"}${Math.abs(netBalance).toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="mb-1 space-y-2.5">
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[#8B8C82]">Total you&apos;re owed</span>
+                    <span className="font-medium text-[#4d7a63]" style={{ fontFamily: fontMono }}>
+                      ${totalOwedToMe.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[#8B8C82]">Total you owe</span>
+                    <span className="font-medium text-[#C1543C]" style={{ fontFamily: fontMono }}>
+                      ${totalIOwe.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {debtDetails.length > 0 && (
+                  <div className="mt-4 max-h-48 space-y-0 overflow-y-auto border-t border-dashed border-[#DEDBD1] pt-1">
+                    {debtDetails.map((det, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex items-center justify-between py-2.5 text-[12.5px] ${idx !== debtDetails.length - 1 ? "border-b border-dashed border-[#DEDBD1]" : ""
+                          }`}
+                      >
+                        <span className="text-[#14181C]">{det.roommateName}</span>
+                        <span
+                          className={det.isOwed ? "font-medium text-[#4d7a63]" : "font-medium text-[#C1543C]"}
+                          style={{ fontFamily: fontMono }}
+                        >
+                          {det.isOwed ? "owes you " : "you owe "}${det.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Link
+                  href="/expenses"
+                  className="mt-5 block rounded-md border border-[#DEDBD1] py-2.5 text-center text-[12.5px] font-medium text-[#14181C] transition hover:border-[#14181C]"
+                >
+                  Manage expenses
+                </Link>
+              </div>
+
+              {/* ROOMMATES DIRECTORY CARD */}
+              <div className="rounded-lg border border-[#DEDBD1] bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-[15px] font-medium text-[#14181C]">House directory</h2>
+
+                {roommates.length === 0 ? (
+                  <p className="py-4 text-[13.5px] text-[#8B8C82]">No roommates added yet.</p>
+                ) : (
+                  <div className="max-h-60 space-y-3 overflow-y-auto">
+                    {roommates.map((r) => (
+                      <div key={r.id} className="flex items-center gap-3">
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                          style={{ backgroundColor: r.color || "#14181C" }}
+                        >
+                          {r.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-[13.5px] text-[#14181C]">{r.name}</p>
+                          <p className="truncate text-[11.5px] text-[#8B8C82]">{r.email}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Link
+                  href="/roommates"
+                  className="mt-5 block rounded-md border border-[#DEDBD1] py-2.5 text-center text-[12.5px] font-medium text-[#14181C] transition hover:border-[#14181C]"
+                >
+                  Roommates list
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
