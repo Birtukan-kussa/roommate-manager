@@ -17,7 +17,7 @@ export type Expense = {
 };
 
 export default function ExpenseList() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { data, loading, error } = useQuery<{ expenses: Expense[] }>(GET_EXPENSES);
   const { data: roommateData } = useQuery<{
     roommates: { id: string; name: string; color: string }[];
@@ -301,7 +301,8 @@ export default function ExpenseList() {
                 <span className="font-bold text-green-400">
                   ${expense.amount.toFixed(2)}
                 </span>
-                {isAdmin && (
+                {/* Edit + Remove buttons: available to admins OR expense creators (paidBy) */}
+                {(isAdmin || (user && expense.paidBy && user._id === expense.paidBy.id)) && (
                   <>
                     <button
                       onClick={() => openEdit(expense)}

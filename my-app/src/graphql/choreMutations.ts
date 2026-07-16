@@ -11,6 +11,11 @@ export const ADD_CHORE = gql`
         name
         color
       }
+      createdBy {
+        id
+        name
+        color
+      }
       dueDate
       recurring
     }
@@ -32,6 +37,11 @@ export const UPDATE_CHORE = gql`
       title
       status
       assignedTo {
+        id
+        name
+        color
+      }
+      createdBy {
         id
         name
         color

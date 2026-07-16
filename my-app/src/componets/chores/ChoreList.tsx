@@ -12,6 +12,7 @@ export type Chore = {
   title: string;
   status: string;
   assignedTo: { id: string; name: string; color: string } | null;
+  createdBy?: { id: string; name: string; color: string } | null;
   dueDate?: string;
   recurring?: string;
 };
@@ -40,7 +41,7 @@ function statusToEnum(status: string) {
 }
 
 export default function ChoreList() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { data, loading, error } = useQuery<{ chores: Chore[] }>(GET_CHORES);
   const { data: roommateData } = useQuery<{
     roommates: { id: string; name: string; color: string }[];
@@ -143,8 +144,8 @@ export default function ChoreList() {
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Chores</h1>
 
-      {isAdmin && (
-        <form onSubmit={handleAdd} className="flex flex-wrap gap-2 mb-6">
+      {/* Add form — available to ALL authenticated users */}
+      <form onSubmit={handleAdd} className="flex flex-wrap gap-2 mb-6">
           <input
             type="text"
             placeholder="Chore title"
@@ -179,7 +180,6 @@ export default function ChoreList() {
             {adding ? "Adding…" : "Add"}
           </button>
         </form>
-      )}
 
       {loading && <p className="text-gray-400">Loading chores…</p>}
       {error && <p className="text-red-400">Error loading chores: {error.message}</p>}
@@ -188,8 +188,7 @@ export default function ChoreList() {
       <div className="space-y-2">
         {!loading && chores.length === 0 && (
           <p className="text-gray-400">
-            No chores yet.{" "}
-            {isAdmin ? "Add one above!" : "Ask your admin to add chores."}
+            No chores yet. Add one above!
           </p>
         )}
 
@@ -320,7 +319,8 @@ export default function ChoreList() {
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="COMPLETED">Completed</option>
                 </select>
-                {isAdmin && (
+                {/* Edit + Remove buttons: available to admins OR chore creators */}
+                {(isAdmin || (user && chore.createdBy && user._id === chore.createdBy.id)) && (
                   <>
                     <button
                       onClick={() => openEdit(chore)}
