@@ -12,10 +12,14 @@ type Props = {
 };
 
 export default function ShoppingItem({ item, onToggle, onDelete, onRename }: Props) {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
   const [saving, setSaving] = useState(false);
+
+  // Members can edit/delete their own items; admins can modify anything
+  const isOwner = user?._id === item.addedBy?.id;
+  const canModify = isAdmin || isOwner;
 
   const handleSave = async () => {
     if (!editName.trim()) return;
@@ -92,7 +96,8 @@ export default function ShoppingItem({ item, onToggle, onDelete, onRename }: Pro
           )}
         </div>
       </div>
-      {isAdmin && (
+      {/* Edit + Delete shown to admins and the item's own creator */}
+      {canModify && (
         <div className="flex items-center gap-3">
           <button
             onClick={() => {

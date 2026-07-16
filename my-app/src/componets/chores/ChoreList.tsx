@@ -296,8 +296,19 @@ export default function ChoreList() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                {/* Status selector — available to ALL authenticated users */}
+                <select
+                  value={statusToEnum(chore.status)}
+                  onChange={(e) =>
+                    updateChore({
+                      variables: { id: chore.id, status: e.target.value },
+                    }).catch((err) =>
+                      setMutationError(
+                        err instanceof Error ? err.message : "Failed to update status."
+                      )
+                    )
+                  }
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium border-0 cursor-pointer ${
                     done
                       ? "bg-green-900 text-green-300"
                       : chore.status === "In Progress"
@@ -305,8 +316,10 @@ export default function ChoreList() {
                       : "bg-gray-700 text-gray-300"
                   }`}
                 >
-                  {chore.status ?? "Not Started"}
-                </span>
+                  <option value="NOT_STARTED">Not Started</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="COMPLETED">Completed</option>
+                </select>
                 {isAdmin && (
                   <>
                     <button

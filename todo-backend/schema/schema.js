@@ -375,8 +375,17 @@ const RootMutation = new GraphQLObjectType({
     deleteShoppingItem: {
       type: ShoppingItemType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const item = await ShoppingItem.findById(args.id);
+        if (!item) throw new Error("Item not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(item.addedBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only delete your own items.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
         return ShoppingItem.findByIdAndDelete(args.id);
       },
     },
@@ -399,8 +408,17 @@ const RootMutation = new GraphQLObjectType({
         id: { type: GraphQLNonNull(GraphQLID) },
         name: { type: GraphQLString },
       },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const item = await ShoppingItem.findById(args.id);
+        if (!item) throw new Error("Item not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(item.addedBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only edit your own items.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
         const updateFields = {};
         if (args.name !== undefined) updateFields.name = args.name;
         return ShoppingItem.findByIdAndUpdate(

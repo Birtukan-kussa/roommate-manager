@@ -121,8 +121,8 @@ export default function ExpenseList() {
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Expenses</h1>
 
-      {isAdmin && (
-        <form onSubmit={handleAdd} className="space-y-3 mb-6 p-4 border border-gray-700 rounded-lg">
+      {/* Add form — available to ALL authenticated users */}
+      <form onSubmit={handleAdd} className="space-y-3 mb-6 p-4 border border-gray-700 rounded-lg">
           <div className="flex gap-2 flex-wrap">
             <input
               type="text"
@@ -179,7 +179,6 @@ export default function ExpenseList() {
             {adding ? "Adding…" : "Add Expense"}
           </button>
         </form>
-      )}
 
       {loading && <p className="text-gray-400">Loading expenses…</p>}
       {error && <p className="text-red-400">Error: {error.message}</p>}
@@ -188,8 +187,7 @@ export default function ExpenseList() {
       <div className="space-y-2">
         {!loading && expenses.length === 0 && (
           <p className="text-gray-400">
-            No expenses yet.{" "}
-            {isAdmin ? "Add one above!" : "Ask your admin to add expenses."}
+            No expenses yet. Add one above!
           </p>
         )}
 
