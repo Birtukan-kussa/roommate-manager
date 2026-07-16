@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 
 const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About Us" },
   { href: "/roommates", label: "Roommates" },
   { href: "/chores", label: "Chores" },
   { href: "/expenses", label: "Expenses" },
@@ -12,6 +15,7 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { user, logout, loading, isAdmin, token } = useAuth();
   const [inviteLoading, setInviteLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,15 +61,31 @@ export default function Navbar() {
         <nav className="hidden items-center gap-7 md:flex">
           {!loading && user && (
             <>
-              {navLinks.map((link) => (
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`text-[13.5px] transition ${
+                      isActive ? "text-[#C1543C] font-semibold" : "text-[#C7CAD1] hover:text-[#F3F3EF]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+              
+              {isAdmin && (
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13.5px] text-[#C7CAD1] transition hover:text-[#F3F3EF]"
+                  href="/notifications"
+                  className={`text-[13.5px] transition ${
+                    pathname === "/notifications" ? "text-[#C1543C] font-semibold" : "text-[#C7CAD1] hover:text-[#F3F3EF]"
+                  }`}
                 >
-                  {link.label}
+                  Notifications
                 </Link>
-              ))}
+              )}
 
               <span className="h-4 w-px bg-[#2B333C]" aria-hidden />
 
@@ -159,16 +179,33 @@ export default function Navbar() {
                 )}
               </div>
 
-              {navLinks.map((link) => (
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`border-t border-[#2B333C] py-3 text-[14px] transition ${
+                      isActive ? "text-[#C1543C] font-semibold" : "text-[#C7CAD1] hover:text-[#F3F3EF]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+              
+              {isAdmin && (
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  href="/notifications"
                   onClick={() => setMenuOpen(false)}
-                  className="border-t border-[#2B333C] py-3 text-[14px] text-[#C7CAD1] transition hover:text-[#F3F3EF]"
+                  className={`border-t border-[#2B333C] py-3 text-[14px] transition ${
+                    pathname === "/notifications" ? "text-[#C1543C] font-semibold" : "text-[#C7CAD1] hover:text-[#F3F3EF]"
+                  }`}
                 >
-                  {link.label}
+                  Notifications
                 </Link>
-              ))}
+              )}
 
               {isAdmin && (
                 <button

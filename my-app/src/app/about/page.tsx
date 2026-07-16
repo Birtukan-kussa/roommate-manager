@@ -1,101 +1,55 @@
 import Link from "next/link";
 
-const pillars = [
-  {
-    title: "Chores",
-    copy: "Set up a rotation once. SmartSplit keeps track of whose turn it is and nudges the household when something's overdue.",
-  },
-  {
-    title: "Expenses",
-    copy: "Log what you paid for and who it's split with. Everyone can see the running balance — no more guessing who owes who.",
-  },
-  {
-    title: "Shopping list",
-    copy: "One shared list for the house. Add what you need, and cross it off when it's in the fridge.",
-  },
-];
+const fontDisplay = "var(--font-display, 'Fraunces', Georgia, serif)";
 
 export default function AboutPage() {
   return (
     <div
-      className="min-h-screen bg-[#F3F3EF]"
+      className="min-h-screen bg-[#F3F3EF] flex flex-col"
       style={{ fontFamily: "var(--font-body, 'Inter', system-ui, sans-serif)" }}
     >
-      <div className="mx-auto max-w-2xl px-6 py-20">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B8C82]">
-          About
+
+
+      <main className="flex-1 mx-auto max-w-3xl px-6 py-16 md:py-24">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B8C82] mb-4">
+          About Us
         </p>
         <h1
-          className="mt-3 text-[36px] leading-[1.15] text-[#14181C]"
-          style={{ fontFamily: "var(--font-display, 'Fraunces', Georgia, serif)" }}
+          className="text-[42px] leading-[1.1] text-[#14181C] mb-8"
+          style={{ fontFamily: fontDisplay }}
         >
-          One ledger for everything you share.
+          Building harmony for shared homes.
         </h1>
-        <p className="mt-5 text-[15.5px] leading-relaxed text-[#5b5c53]">
-          Living with roommates usually means two spreadsheets that never get updated and a
-          group chat full of &ldquo;did you pay me back yet?&rdquo; SmartSplit puts your chores
-          and expenses in one place, so the house always knows where things stand.
-        </p>
-
-        <div className="mt-10 flex items-center gap-3" aria-hidden>
-          <span className="h-px flex-1 bg-[#DEDBD1]" />
-          <span className="text-[11px] uppercase tracking-[0.14em] text-[#8B8C82]">
-            What it does
-          </span>
-          <span className="h-px flex-1 bg-[#DEDBD1]" />
-        </div>
-
-        <div className="mt-8 flex flex-col">
-          {pillars.map((pillar, i) => (
-            <div
-              key={pillar.title}
-              className={`flex gap-5 py-5 ${i !== pillars.length - 1 ? "border-b border-dashed border-[#DEDBD1]" : ""
-                }`}
-            >
-              <span
-                className="mt-0.5 shrink-0 text-[13px] text-[#E2993C]"
-                style={{ fontFamily: "var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace)" }}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div>
-                <h3 className="text-[15px] font-medium text-[#14181C]">{pillar.title}</h3>
-                <p className="mt-1 text-[14px] leading-relaxed text-[#5b5c53]">{pillar.copy}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-14 rounded-lg border border-[#DEDBD1] bg-white px-6 py-6">
-          <h2
-            className="text-[18px] text-[#14181C]"
-            style={{ fontFamily: "var(--font-display, 'Fraunces', Georgia, serif)" }}
-          >
-            Why we built it
-          </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#5b5c53]">
-            Most tools handle either chores or money, not both — and shared living is really
-            about both. We wanted something small households could set up in a few minutes and
-            actually keep using, without turning fairness into a spreadsheet argument.
+        
+        <div className="space-y-6 text-[15.5px] leading-relaxed text-[#5b5c53]">
+          <p>
+            Living with roommates can be one of the best experiences of your life. But managing shared expenses, dividing up chores, and keeping the kitchen stocked can quickly become a source of friction.
           </p>
+          <p>
+            We created <strong>SmartSplit</strong> to remove the awkwardness from shared living. No more tracking down receipts, no more passive-aggressive group chats about who took out the trash last, and no more complicated spreadsheets.
+          </p>
+          <p>
+            Our mission is simple: to help you split the bills and the chores fairly and transparently, so you can focus on what really matters—enjoying the friendship and the home you share.
+          </p>
+          
+          <div className="mt-12 rounded-xl border border-[#DEDBD1] bg-white p-8 shadow-sm">
+            <h2 
+              className="text-2xl text-[#14181C] mb-4" 
+              style={{ fontFamily: fontDisplay }}
+            >
+              Ready to simplify your household?
+            </h2>
+            <div className="flex gap-3">
+              <Link
+                href="/signup"
+                className="rounded-md bg-[#14181C] px-5 py-2.5 text-[14px] font-medium text-[#F3F3EF] transition hover:bg-[#232a32]"
+              >
+                Get started
+              </Link>
+            </div>
+          </div>
         </div>
-
-        <div className="mt-12 flex items-center gap-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#14181C] transition hover:text-[#E2993C]"
-          >
-            ← Back to home
-          </Link>
-          <span className="h-4 w-px bg-[#DEDBD1]" aria-hidden />
-          <Link
-            href="/signup"
-            className="text-[14px] font-medium text-[#14181C] underline decoration-[#E2993C] decoration-2 underline-offset-2"
-          >
-            Set up your household
-          </Link>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,12 +1,17 @@
 import { gql } from "@apollo/client";
 
 export const ADD_SHOPPING_ITEM = gql`
-  mutation AddShoppingItem($name: String!, $addedBy: ID) {
-    addShoppingItem(name: $name, addedBy: $addedBy) {
+  mutation AddShoppingItem($name: String!, $addedBy: ID, $assignedTo: ID) {
+    addShoppingItem(name: $name, addedBy: $addedBy, assignedTo: $assignedTo) {
       id
       name
       purchased
       addedBy {
+        id
+        name
+        color
+      }
+      assignedTo {
         id
         name
         color
@@ -34,12 +39,17 @@ export const TOGGLE_PURCHASED = gql`
 `;
 
 export const UPDATE_SHOPPING_ITEM = gql`
-  mutation UpdateShoppingItem($id: ID!, $name: String) {
-    updateShoppingItem(id: $id, name: $name) {
+  mutation UpdateShoppingItem($id: ID!, $name: String, $assignedTo: ID) {
+    updateShoppingItem(id: $id, name: $name, assignedTo: $assignedTo) {
       id
       name
       purchased
       addedBy {
+        id
+        name
+        color
+      }
+      assignedTo {
         id
         name
         color

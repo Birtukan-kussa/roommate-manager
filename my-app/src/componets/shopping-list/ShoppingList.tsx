@@ -1,7 +1,19 @@
 "use client";
 
 import { useQuery, useMutation } from "@apollo/client/react";
+import { gql } from "@apollo/client";
 import { GET_SHOPPING_ITEMS } from "@/graphql/shoppingQueries";
+
+const GET_ROOMMATES = gql`
+  query GetRoommatesForShopping {
+    roommates {
+      id
+      name
+      email
+      color
+    }
+  }
+`;
 import {
   ADD_SHOPPING_ITEM,
   DELETE_SHOPPING_ITEM,
@@ -23,8 +35,9 @@ export type Item = {
 const fontDisplay = "var(--font-display, 'Fraunces', Georgia, serif)";
 
 export default function ShoppingList() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { data, loading, error } = useQuery<{ shoppingItems: Item[] }>(GET_SHOPPING_ITEMS);
+  const { data: roommatesData } = useQuery<{ roommates: any[] }>(GET_ROOMMATES);
 
   const [addShoppingItem] = useMutation(ADD_SHOPPING_ITEM, {
     refetchQueries: [{ query: GET_SHOPPING_ITEMS }],
@@ -55,6 +68,10 @@ export default function ShoppingList() {
 
   async function renameItem(id: string, name: string) {
     await updateShoppingItem({ variables: { id, name } });
+  }
+
+  async function assignItem(id: string, assignedTo: string | null) {
+    await updateShoppingItem({ variables: { id, assignedTo } });
   }
 
   const items: Item[] = data?.shoppingItems ?? [];
@@ -118,6 +135,8 @@ export default function ShoppingList() {
                   onToggle={toggleItem}
                   onDelete={deleteItem}
                   onRename={renameItem}
+                  onAssign={assignItem}
+                  roommates={roommatesData?.roommates || []}
                   isLast={i === items.length - 1}
                 />
               ))}

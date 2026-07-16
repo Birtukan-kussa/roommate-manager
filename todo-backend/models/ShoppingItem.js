@@ -9,6 +9,10 @@ const ShoppingItemSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Roommate",
   },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Roommate",
+  },
   purchased: {
     type: Boolean,
     default: false,

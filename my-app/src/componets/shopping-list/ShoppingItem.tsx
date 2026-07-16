@@ -9,10 +9,12 @@ type Props = {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onRename: (id: string, newName: string) => Promise<void>;
+  onAssign: (id: string, assigneeId: string | null) => Promise<void>;
+  roommates: { id: string; name: string; color: string }[];
   isLast?: boolean;
 };
 
-export default function ShoppingItem({ item, onToggle, onDelete, onRename, isLast = false }: Props) {
+export default function ShoppingItem({ item, onToggle, onDelete, onRename, onAssign, roommates, isLast = false }: Props) {
   const { user, isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
@@ -116,12 +118,34 @@ export default function ShoppingItem({ item, onToggle, onDelete, onRename, isLas
               added by {item.addedBy.name}
             </span>
           )}
+          {(item as any).assignedTo && (
+            <span className="ml-3 inline-flex items-center gap-1.5 rounded-full bg-[#E2993C]/10 px-2 py-0.5 text-[11px] font-medium text-[#C1543C]">
+              <span
+                aria-hidden
+                className="h-[6px] w-[6px] rounded-full"
+                style={{ backgroundColor: (item as any).assignedTo.color ?? "#C1543C" }}
+              />
+              assigned to {(item as any).assignedTo.name}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Edit + Delete shown to admins and the item's own creator */}
       {canModify && (
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-2">
+          {isAdmin && (
+            <select
+              value={(item as any).assignedTo?.id || ""}
+              onChange={(e) => onAssign(item.id, e.target.value || null)}
+              className="mr-2 rounded-md border border-[#DEDBD1] bg-white px-2 py-1 text-[12px] text-[#14181C] focus:border-[#E2993C] focus:outline-none"
+            >
+              <option value="">Unassigned</option>
+              {roommates.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          )}
           <button
             onClick={() => {
               setEditName(item.name);

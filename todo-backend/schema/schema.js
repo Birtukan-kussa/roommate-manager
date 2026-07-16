@@ -2,6 +2,7 @@ import { Roommate } from "../models/Roommate.js";
 import { Chore } from "../models/Chore.js";
 import { Expense } from "../models/Expense.js";
 import { ShoppingItem } from "../models/ShoppingItem.js";
+import { sendNotificationEmail } from "../server/emailService.js";
 
 import {
   GraphQLID,
@@ -139,6 +140,12 @@ const ShoppingItemType = new GraphQLObjectType({
         return Roommate.findById(parent.addedBy);
       },
     },
+    assignedTo: {
+      type: RoommateType,
+      resolve(parent) {
+        return Roommate.findById(parent.assignedTo);
+      },
+    },
     createdAt: { type: GraphQLString },
   }),
 });
@@ -234,6 +241,7 @@ const RootMutation = new GraphQLObjectType({
           email: args.email,
           color: args.color,
           household: userHousehold(context),
+          password: "password123", // Default password so they can log in
         });
         return roommate.save();
       },
@@ -287,7 +295,7 @@ const RootMutation = new GraphQLObjectType({
         dueDate: { type: GraphQLString },
         recurring: { type: RecurringEnum, defaultValue: "None" },
       },
-      resolve(parent, args, context) {
+      async resolve(parent, args, context) {
         requireAuth(context);
         const chore = new Chore({
           title: args.title,
@@ -299,7 +307,20 @@ const RootMutation = new GraphQLObjectType({
           createdBy: context.req.user._id,
           household: userHousehold(context),
         });
-        return chore.save();
+        const savedChore = await chore.save();
+        
+        if (args.assignedTo) {
+          const assignee = await Roommate.findById(args.assignedTo);
+          if (assignee && assignee.email) {
+            await sendNotificationEmail(
+              assignee.email, 
+              "You have a new chore assigned!", 
+              `Hi ${assignee.name},\n\nYou have been assigned a new chore: ${args.title}.\nDue date: ${args.dueDate || 'Not set'}.\n\nPlease check your SmartSplit dashboard for details.`
+            );
+          }
+        }
+        
+        return savedChore;
       },
     },
 
@@ -362,11 +383,24 @@ const RootMutation = new GraphQLObjectType({
         if (args.dueDate !== undefined) updateFields.dueDate = args.dueDate;
         if (args.recurring !== undefined) updateFields.recurring = args.recurring;
 
-        return Chore.findByIdAndUpdate(
+        const updatedChore = await Chore.findByIdAndUpdate(
           args.id,
           { $set: updateFields },
           { new: true }
         );
+        
+        if (args.assignedTo && String(chore.assignedTo) !== String(args.assignedTo)) {
+           const assignee = await Roommate.findById(args.assignedTo);
+           if (assignee && assignee.email) {
+             await sendNotificationEmail(
+               assignee.email, 
+               "You have a new chore assigned!", 
+               `Hi ${assignee.name},\n\nYou have been assigned the chore: ${updatedChore.title}.\nDue date: ${updatedChore.dueDate || 'Not set'}.\n\nPlease check your SmartSplit dashboard for details.`
+             );
+           }
+        }
+        
+        return updatedChore;
       },
     },
 
@@ -450,15 +484,30 @@ const RootMutation = new GraphQLObjectType({
       args: {
         name: { type: GraphQLNonNull(GraphQLString) },
         addedBy: { type: GraphQLID },
+        assignedTo: { type: GraphQLID },
       },
-      resolve(parent, args, context) {
+      async resolve(parent, args, context) {
         requireAuth(context);
         const item = new ShoppingItem({
           name: args.name,
           addedBy: args.addedBy || context.req.user._id,
+          assignedTo: args.assignedTo,
           household: userHousehold(context),
         });
-        return item.save();
+        const savedItem = await item.save();
+        
+        if (args.assignedTo) {
+          const assignee = await Roommate.findById(args.assignedTo);
+          if (assignee && assignee.email) {
+            await sendNotificationEmail(
+              assignee.email, 
+              "New Shopping Duty!", 
+              `Hi ${assignee.name},\n\nYou have been requested to pick up a new item for the house: ${args.name}.\n\nPlease check your SmartSplit dashboard for details.`
+            );
+          }
+        }
+        
+        return savedItem;
       },
     },
 
@@ -497,6 +546,7 @@ const RootMutation = new GraphQLObjectType({
       args: {
         id: { type: GraphQLNonNull(GraphQLID) },
         name: { type: GraphQLString },
+        assignedTo: { type: GraphQLID },
       },
       async resolve(parent, args, context) {
         requireAuth(context);
@@ -511,12 +561,74 @@ const RootMutation = new GraphQLObjectType({
         }
         const updateFields = {};
         if (args.name !== undefined) updateFields.name = args.name;
-        return ShoppingItem.findByIdAndUpdate(
+        if (args.assignedTo !== undefined) updateFields.assignedTo = args.assignedTo;
+        
+        const updatedItem = await ShoppingItem.findByIdAndUpdate(
           args.id,
           { $set: updateFields },
           { new: true }
         );
+        
+        if (args.assignedTo && String(item.assignedTo) !== String(args.assignedTo)) {
+           const assignee = await Roommate.findById(args.assignedTo);
+           if (assignee && assignee.email) {
+             await sendNotificationEmail(
+               assignee.email, 
+               "Shopping Duty Update!", 
+               `Hi ${assignee.name},\n\nYou are now responsible for picking up: ${updatedItem.name}.\n\nPlease check your SmartSplit dashboard for details.`
+             );
+           }
+        }
+        
+        return updatedItem;
       },
+    },
+
+    // ----- Custom Admin Notifications -----
+    sendAdminNotification: {
+      type: GraphQLBoolean,
+      args: {
+        roommateId: { type: GraphQLID }, // Optional. If not provided, send to all.
+        message: { type: GraphQLNonNull(GraphQLString) },
+        subject: { type: GraphQLString },
+      },
+      async resolve(parent, args, context) {
+        requireAdmin(context); // only admins can send manual notifications
+        
+        const subject = args.subject || "Message from SmartSplit Admin";
+        const messageText = `${args.message}\n\n--\nSent from SmartSplit`;
+        
+        if (args.roommateId) {
+          const roommate = await Roommate.findById(args.roommateId);
+          if (!roommate) {
+            throw new Error("Roommate not found");
+          }
+          if (!roommate.email) {
+            throw new Error(`Roommate ${roommate.name} does not have an email address.`);
+          }
+          const success = await sendNotificationEmail(roommate.email, subject, messageText);
+          if (!success) {
+            throw new Error("Failed to send email. Please ensure SMTP credentials are configured in your backend .env file.");
+          }
+        } else {
+          // Send to everyone
+          const roommates = await Roommate.find({ email: { $exists: true, $ne: null } });
+          if (roommates.length === 0) {
+            throw new Error("No roommates with email addresses found.");
+          }
+          let failCount = 0;
+          for (let r of roommates) {
+            const success = await sendNotificationEmail(r.email, subject, messageText);
+            if (!success) failCount++;
+          }
+          if (failCount === roommates.length) {
+            throw new Error("Failed to send emails to any roommates. Please check your backend SMTP settings.");
+          } else if (failCount > 0) {
+            throw new Error(`Email sent, but failed to deliver to ${failCount} roommates.`);
+          }
+        }
+        return true;
+      }
     },
   },
 });

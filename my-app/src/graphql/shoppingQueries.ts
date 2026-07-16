@@ -11,6 +11,11 @@ export const GET_SHOPPING_ITEMS = gql`
         name
         color
       }
+      assignedTo {
+        id
+        name
+        color
+      }
       createdAt
     }
   }

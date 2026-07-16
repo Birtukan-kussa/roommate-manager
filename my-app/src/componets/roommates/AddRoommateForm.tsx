@@ -54,7 +54,7 @@ export default function AddRoommateForm() {
       />
       <input
         type="email"
-        placeholder="Email (optional)"
+        placeholder="Email (required for notifications)"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         className={inputClass}
