@@ -20,6 +20,8 @@ export type Item = {
   createdAt?: string;
 };
 
+const fontDisplay = "var(--font-display, 'Fraunces', Georgia, serif)";
+
 export default function ShoppingList() {
   const { user } = useAuth();
   const { data, loading, error } = useQuery<{ shoppingItems: Item[] }>(GET_SHOPPING_ITEMS);
@@ -56,28 +58,72 @@ export default function ShoppingList() {
   }
 
   const items: Item[] = data?.shoppingItems ?? [];
+  const remaining = items.filter((i) => !i.purchased).length;
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Shopping List</h1>
-      <AddItemForm onAdd={addItem} />
+    <div
+      className="min-h-screen bg-[#F3F3EF]"
+      style={{ fontFamily: "var(--font-body, 'Inter', system-ui, sans-serif)" }}
+    >
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B8C82]">
+          Household
+        </p>
+        <h1
+          className="mt-2 text-[30px] leading-tight text-[#14181C]"
+          style={{ fontFamily: fontDisplay }}
+        >
+          Shopping list
+        </h1>
+        <p className="mt-2 text-[14px] leading-relaxed text-[#5b5c53]">
+          {items.length === 0
+            ? "One shared list for the house."
+            : remaining === 0
+              ? "Everything's crossed off."
+              : `${remaining} item${remaining === 1 ? "" : "s"} still needed.`}
+        </p>
 
-      {loading && <p className="text-gray-400 mt-4">Loading items…</p>}
-      {error && <p className="text-red-400 mt-4">Error loading items: {error.message}</p>}
+        <div className="mt-8">
+          <AddItemForm onAdd={addItem} />
+        </div>
 
-      <div className="mt-6 space-y-2">
-        {!loading && items.length === 0 && (
-          <p className="text-gray-400">No items added yet.</p>
+        {loading && (
+          <div className="mt-6 flex items-center gap-2.5 text-[13.5px] text-[#8B8C82]">
+            <span
+              aria-hidden
+              className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#DEDBD1] border-t-[#14181C]"
+            />
+            Loading items…
+          </div>
         )}
-        {items.map((item) => (
-          <ShoppingItem
-            key={item.id}
-            item={item}
-            onToggle={toggleItem}
-            onDelete={deleteItem}
-            onRename={renameItem}
-          />
-        ))}
+        {error && (
+          <p className="mt-6 rounded-md border border-[#C1543C]/25 bg-[#C1543C]/[0.06] px-3.5 py-2.5 text-[13.5px] text-[#C1543C]">
+            Error loading items: {error.message}
+          </p>
+        )}
+
+        <div className="mt-6">
+          {!loading && items.length === 0 && (
+            <p className="rounded-lg border border-dashed border-[#DEDBD1] px-5 py-8 text-center text-[13.5px] text-[#8B8C82]">
+              No items added yet — use the form above.
+            </p>
+          )}
+
+          {items.length > 0 && (
+            <div className="rounded-lg border border-[#DEDBD1] bg-white shadow-sm">
+              {items.map((item, i) => (
+                <ShoppingItem
+                  key={item.id}
+                  item={item}
+                  onToggle={toggleItem}
+                  onDelete={deleteItem}
+                  onRename={renameItem}
+                  isLast={i === items.length - 1}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

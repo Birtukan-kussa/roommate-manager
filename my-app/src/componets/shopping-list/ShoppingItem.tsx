@@ -9,9 +9,10 @@ type Props = {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onRename: (id: string, newName: string) => Promise<void>;
+  isLast?: boolean;
 };
 
-export default function ShoppingItem({ item, onToggle, onDelete, onRename }: Props) {
+export default function ShoppingItem({ item, onToggle, onDelete, onRename, isLast = false }: Props) {
   const { user, isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
@@ -37,10 +38,12 @@ export default function ShoppingItem({ item, onToggle, onDelete, onRename }: Pro
     setIsEditing(false);
   };
 
+  const rowBorder = !isLast ? "border-b border-dashed border-[#DEDBD1]" : "";
+
   // ── Edit row ──
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2 rounded border border-blue-600 bg-gray-900 px-4 py-2">
+      <div className={`flex items-center gap-2 border-l-2 border-l-[#E2993C] bg-[#FBF6ED] px-5 py-3 ${rowBorder}`}>
         <input
           type="text"
           value={editName}
@@ -49,19 +52,19 @@ export default function ShoppingItem({ item, onToggle, onDelete, onRename }: Pro
             if (e.key === "Enter") handleSave();
             if (e.key === "Escape") handleCancel();
           }}
-          className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm"
+          className="flex-1 rounded-md border border-[#DEDBD1] bg-white px-3 py-1.5 text-[13.5px] text-[#14181C] outline-none transition focus:border-[#E2993C] focus:ring-2 focus:ring-[#E2993C]/25"
           autoFocus
         />
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-md bg-[#14181C] px-3 py-1.5 text-[12.5px] font-medium text-[#F3F3EF] transition hover:bg-[#232a32] disabled:opacity-60"
         >
           {saving ? "…" : "Save"}
         </button>
         <button
           onClick={handleCancel}
-          className="rounded border border-gray-600 px-3 py-1.5 text-sm text-gray-300 hover:border-gray-400"
+          className="rounded-md border border-[#DEDBD1] px-3 py-1.5 text-[12.5px] font-medium text-[#5b5c53] transition hover:border-[#14181C]"
         >
           Cancel
         </button>
@@ -71,46 +74,66 @@ export default function ShoppingItem({ item, onToggle, onDelete, onRename }: Pro
 
   // ── Read-only row ──
   return (
-    <div className="flex items-center justify-between rounded border border-gray-700 px-4 py-2">
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          checked={item.purchased}
-          onChange={() => onToggle(item.id)}
-          className="cursor-pointer"
-        />
-        <div>
-          <span className={item.purchased ? "line-through text-gray-500" : ""}>
+    <div className={`flex items-center justify-between gap-4 px-5 py-3.5 ${rowBorder}`}>
+      <div className="flex min-w-0 items-center gap-3">
+        <label className="relative flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center">
+          <input
+            type="checkbox"
+            checked={item.purchased}
+            onChange={() => onToggle(item.id)}
+            className="peer sr-only"
+          />
+          <span
+            className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 transition peer-focus-visible:ring-2 peer-focus-visible:ring-[#E2993C]/40 ${item.purchased ? "border-[#7FA88A] bg-[#7FA88A]" : "border-[#DEDBD1] bg-white"
+              }`}
+          >
+            {item.purchased && (
+              <svg viewBox="0 0 12 12" className="h-[9px] w-[9px]" aria-hidden>
+                <path
+                  d="M2 6.2 4.8 9 10 3"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+        </label>
+
+        <div className="min-w-0">
+          <span className={`text-[14px] ${item.purchased ? "text-[#A6A79C] line-through" : "text-[#14181C]"}`}>
             {item.name}
           </span>
           {item.addedBy && (
-            <span className="ml-2 text-sm text-gray-400">
-              → added by{" "}
+            <span className="ml-2 inline-flex items-center gap-1.5 text-[12px] text-[#8B8C82]">
               <span
-                className="font-medium"
-                style={{ color: item.addedBy.color ?? "inherit" }}
-              >
-                {item.addedBy.name}
-              </span>
+                aria-hidden
+                className="h-[6px] w-[6px] rounded-full"
+                style={{ backgroundColor: item.addedBy.color ?? "#A6A79C" }}
+              />
+              added by {item.addedBy.name}
             </span>
           )}
         </div>
       </div>
+
       {/* Edit + Delete shown to admins and the item's own creator */}
       {canModify && (
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={() => {
               setEditName(item.name);
               setIsEditing(true);
             }}
-            className="text-blue-400 hover:text-blue-300 text-sm"
+            className="rounded-md px-2 py-1 text-[12.5px] font-medium text-[#8B8C82] transition hover:text-[#14181C]"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(item.id)}
-            className="text-red-400 hover:text-red-500 text-sm"
+            className="rounded-md px-2 py-1 text-[12.5px] font-medium text-[#8B8C82] transition hover:bg-[#C1543C]/10 hover:text-[#C1543C]"
           >
             Remove
           </button>
