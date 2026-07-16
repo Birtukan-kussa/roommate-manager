@@ -81,6 +81,12 @@ const ChoreType = new GraphQLObjectType({
         return Roommate.findById(parent.assignedTo);
       },
     },
+    createdBy: {
+      type: RoommateType,
+      resolve(parent) {
+        return Roommate.findById(parent.createdBy);
+      },
+    },
     createdAt: { type: GraphQLString },
   }),
 });
@@ -257,6 +263,7 @@ const RootMutation = new GraphQLObjectType({
           assignedTo: args.assignedTo,
           dueDate: args.dueDate,
           recurring: args.recurring,
+          createdBy: context.req.user._id,
         });
         return chore.save();
       },
@@ -265,8 +272,17 @@ const RootMutation = new GraphQLObjectType({
     deleteChore: {
       type: ChoreType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const chore = await Chore.findById(args.id);
+        if (!chore) throw new Error("Chore not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(chore.createdBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only delete chores you created.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
         return Chore.findByIdAndDelete(args.id);
       },
     },
@@ -282,8 +298,28 @@ const RootMutation = new GraphQLObjectType({
         dueDate: { type: GraphQLString },
         recurring: { type: RecurringEnum },
       },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const chore = await Chore.findById(args.id);
+        if (!chore) throw new Error("Chore not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(chore.createdBy) === String(context.req.user._id);
+        
+        // Members can only update the status of chores they did not create.
+        if (!isAdmin && !isOwner) {
+          if (
+            args.title !== undefined ||
+            args.description !== undefined ||
+            args.assignedTo !== undefined ||
+            args.dueDate !== undefined ||
+            args.recurring !== undefined
+          ) {
+            throw new GraphQLError("Not authorized. You can only update the status of this chore.", {
+              extensions: { code: "FORBIDDEN" },
+            });
+          }
+        }
+
         const updateFields = {};
         if (args.title !== undefined) updateFields.title = args.title;
         if (args.description !== undefined) updateFields.description = args.description;
@@ -324,8 +360,17 @@ const RootMutation = new GraphQLObjectType({
     deleteExpense: {
       type: ExpenseType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const expense = await Expense.findById(args.id);
+        if (!expense) throw new Error("Expense not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(expense.paidBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only delete expenses you paid for.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
         return Expense.findByIdAndDelete(args.id);
       },
     },
@@ -339,8 +384,17 @@ const RootMutation = new GraphQLObjectType({
         paidBy: { type: GraphQLID },
         splitBetween: { type: new GraphQLList(GraphQLID) },
       },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const expense = await Expense.findById(args.id);
+        if (!expense) throw new Error("Expense not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(expense.paidBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only edit expenses you paid for.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
         const updateFields = {};
         if (args.title !== undefined) updateFields.title = args.title;
         if (args.amount !== undefined) updateFields.amount = args.amount;
@@ -375,8 +429,17 @@ const RootMutation = new GraphQLObjectType({
     deleteShoppingItem: {
       type: ShoppingItemType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args, context) {
-        requireAdmin(context);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const item = await ShoppingItem.findById(args.id);
+        if (!item) throw new Error("Item not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(item.addedBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only delete your own items.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
         return ShoppingItem.findByIdAndDelete(args.id);
       },
     },
@@ -390,6 +453,33 @@ const RootMutation = new GraphQLObjectType({
         if (!item) throw new Error("Item not found");
         item.purchased = !item.purchased;
         return item.save();
+      },
+    },
+
+    updateShoppingItem: {
+      type: ShoppingItemType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        name: { type: GraphQLString },
+      },
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const item = await ShoppingItem.findById(args.id);
+        if (!item) throw new Error("Item not found");
+        const isAdmin = context.req.user.role === "admin";
+        const isOwner = String(item.addedBy) === String(context.req.user._id);
+        if (!isAdmin && !isOwner) {
+          throw new GraphQLError("Not authorized. You can only edit your own items.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
+        const updateFields = {};
+        if (args.name !== undefined) updateFields.name = args.name;
+        return ShoppingItem.findByIdAndUpdate(
+          args.id,
+          { $set: updateFields },
+          { new: true }
+        );
       },
     },
   },

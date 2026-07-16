@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (e) {
-        console.error("Failed to parse user from cookies");
+        console.error("Failed to parse user from cookies", e);
       }
     }
     setLoading(false);

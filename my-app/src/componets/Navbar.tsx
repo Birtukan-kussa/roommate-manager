@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/AuthContext";
 
 export default function Navbar() {
   const { user, logout, loading, isAdmin, token } = useAuth();
-  const [inviteUrl, setInviteUrl] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const handleGenerateInvite = async () => {
@@ -23,12 +22,12 @@ export default function Navbar() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to generate invite");
       
-      setInviteUrl(data.inviteUrl);
       await navigator.clipboard.writeText(data.inviteUrl);
       alert(`Invite link generated and copied to clipboard!\n\n${data.inviteUrl}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(`Error generating invite: ${err.message}`);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      alert(`Error generating invite: ${message}`);
     } finally {
       setInviteLoading(false);
     }
@@ -62,6 +61,7 @@ export default function Navbar() {
             <Link href="/roommates" className="hover:text-gray-300 text-sm">Roommates</Link>
             <Link href="/chores" className="hover:text-gray-300 text-sm">Chores</Link>
             <Link href="/expenses" className="hover:text-gray-300 text-sm">Expenses</Link>
+            <Link href="/shopping-list" className="hover:text-gray-300 text-sm">Shopping List</Link>
             <button
               onClick={logout}
               className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded"

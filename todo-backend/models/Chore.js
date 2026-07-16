@@ -17,6 +17,10 @@ const ChoreSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Roommate",
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Roommate",
+  },
   dueDate: {
     type: Date,
   },

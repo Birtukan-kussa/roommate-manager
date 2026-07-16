@@ -12,6 +12,11 @@ export const GET_CHORES = gql`
         name
         color
       }
+      createdBy {
+        id
+        name
+        color
+      }
       dueDate
       recurring
     }
