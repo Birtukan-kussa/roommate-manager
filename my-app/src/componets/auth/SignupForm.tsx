@@ -74,8 +74,8 @@ export default function SignupForm() {
       }
 
       login({ _id: data._id, name: data.name, email: data.email, role: data.role }, data.token);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setLoading(false);
     }

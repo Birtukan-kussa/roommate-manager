@@ -24,7 +24,7 @@ export default function LandingPage() {
         <Link href="/expenses" style={cardStyle}>
           💸 Expenses
         </Link>
-        <Link href="/shopping" style={cardStyle}>
+        <Link href="/shopping-list" style={cardStyle}>
           🛒 Shopping List
         </Link>
       </div>

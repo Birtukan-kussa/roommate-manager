@@ -33,9 +33,9 @@ export default function LoginForm() {
         throw new Error(data.message || "Login failed");
       }
 
-      login({ _id: data._id, name: data.name, email: data.email }, data.token);
-    } catch (err: any) {
-      setError(err.message);
+      login({ _id: data._id, name: data.name, email: data.email, role: data.role }, data.token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }

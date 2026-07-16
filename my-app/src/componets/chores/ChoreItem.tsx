@@ -11,19 +11,20 @@ type Props = {
 
 export default function ChoreItem({ chore, onToggle, onDelete }: Props) {
   const { isAdmin } = useAuth();
+  const done = chore.status === "COMPLETED" || chore.status === "Completed";
 
   return (
     <div className="flex items-center justify-between rounded border border-gray-700 px-4 py-2">
       <div className="flex items-center gap-3">
         <input
           type="checkbox"
-          checked={chore.done}
+          checked={done}
           onChange={() => onToggle(chore.id)}
         />
-        <span className={chore.done ? "line-through text-gray-500" : ""}>
+        <span className={done ? "line-through text-gray-500" : ""}>
           {chore.title}
         </span>
-        <span className="text-sm text-gray-400">({chore.assignedTo})</span>
+        <span className="text-sm text-gray-400">({chore.assignedTo?.name ?? "Unassigned"})</span>
       </div>
       {isAdmin && (
         <button

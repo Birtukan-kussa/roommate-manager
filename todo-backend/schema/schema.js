@@ -283,7 +283,7 @@ const RootMutation = new GraphQLObjectType({
         recurring: { type: RecurringEnum },
       },
       resolve(parent, args, context) {
-        requireAdmin(context);
+        requireAuth(context);
         const updateFields = {};
         if (args.title !== undefined) updateFields.title = args.title;
         if (args.description !== undefined) updateFields.description = args.description;
@@ -390,6 +390,24 @@ const RootMutation = new GraphQLObjectType({
         if (!item) throw new Error("Item not found");
         item.purchased = !item.purchased;
         return item.save();
+      },
+    },
+
+    updateShoppingItem: {
+      type: ShoppingItemType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        name: { type: GraphQLString },
+      },
+      resolve(parent, args, context) {
+        requireAdmin(context);
+        const updateFields = {};
+        if (args.name !== undefined) updateFields.name = args.name;
+        return ShoppingItem.findByIdAndUpdate(
+          args.id,
+          { $set: updateFields },
+          { new: true }
+        );
       },
     },
   },

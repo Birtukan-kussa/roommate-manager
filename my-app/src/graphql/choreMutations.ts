@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
 export const ADD_CHORE = gql`
-  mutation AddChore($title: String!, $assignedTo: ID, $status: ChoreStatus, $dueDate: String, $recurring: Recurring) {
+  mutation AddChore($title: String!, $assignedTo: ID, $status: ChoreStatus, $dueDate: String, $recurring: RecurringType) {
     addChore(title: $title, assignedTo: $assignedTo, status: $status, dueDate: $dueDate, recurring: $recurring) {
       id
       title
