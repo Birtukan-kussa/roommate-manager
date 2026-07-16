@@ -24,6 +24,11 @@ const RoommateSchema = new mongoose.Schema({
     type: String,
     default: "#3498db",
   },
+  household: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Household",
+    required: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

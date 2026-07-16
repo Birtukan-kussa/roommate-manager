@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { Roommate } from "../../models/Roommate.js";
 import { Invite } from "../../models/Invite.js";
+import { Household } from "../../models/Household.js";
 
 const router = express.Router();
 
@@ -25,20 +26,21 @@ router.post(
         return res.status(403).json({ message: "Not authorized. Admin access required." });
       }
 
-      // Generate a secure random token
       const token = crypto.randomBytes(16).toString("hex");
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
       const invite = await Invite.create({
         token,
         expiresAt,
+        household: req.user.household, // Link invite to admin's household
       });
+
+      const clientOrigin = process.env.CLIENT_URL || `${req.protocol}://${req.get("host").replace("9000", "3000")}`;
 
       res.status(201).json({
         token: invite.token,
         expiresAt: invite.expiresAt,
-        // Send absolute invite URL
-        inviteUrl: `${req.protocol}://${req.get("host").replace("9000", "3000")}/signup?invite=${invite.token}`,
+        inviteUrl: `${clientOrigin}/signup?invite=${invite.token}`,
       });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -55,15 +57,12 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const userCount = await Roommate.countDocuments();
+    let household;
+    let role;
     let invite = null;
 
-    // Enforce invite token if this is not the first user
-    if (userCount > 0) {
-      if (!inviteToken) {
-        return res.status(400).json({ message: "Invite token is required to register" });
-      }
-
+    if (inviteToken) {
+      // ── Joining an existing household via invite ──────────────────
       invite = await Invite.findOne({ token: inviteToken });
       if (!invite) {
         return res.status(400).json({ message: "Invalid invite token" });
@@ -74,15 +73,18 @@ router.post("/register", async (req, res) => {
       if (invite.expiresAt < new Date()) {
         return res.status(400).json({ message: "Invite token has expired" });
       }
+
+      household = invite.household;
+      role = "member";
+    } else {
+      // ── Starting a brand-new household ────────────────────────────
+      household = await Household.create({ name: `${name}'s Household` });
+      role = "admin";
     }
 
-    // First user ever becomes admin
-    const role = userCount === 0 ? "admin" : "member";
-
-    const user = await Roommate.create({ name, email, password, color, role });
+    const user = await Roommate.create({ name, email, password, color, role, household });
 
     if (user) {
-      // Mark token as used if an invite was required
       if (invite) {
         invite.used = true;
         invite.usedBy = user._id;

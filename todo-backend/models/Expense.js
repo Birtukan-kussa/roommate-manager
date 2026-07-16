@@ -24,6 +24,11 @@ const ExpenseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  household: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Household",
+    required: true,
+  },
 });
 
 export const Expense = mongoose.model("Expense", ExpenseSchema);

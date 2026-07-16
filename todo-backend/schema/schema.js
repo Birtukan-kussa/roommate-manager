@@ -34,6 +34,19 @@ const requireAdmin = (context) => {
   }
 };
 
+// ---------- HOUSEHOLD HELPERS ----------
+// Returns the ObjectId of the logged-in user's household
+const userHousehold = (context) => context.req.user.household;
+
+// Checks a resource belongs to the current user's household
+const assertSameHousehold = (resource, context, label = "Resource") => {
+  if (!resource || String(resource.household) !== String(userHousehold(context))) {
+    throw new GraphQLError(`${label} not found in your household.`, {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+};
+
 // ---------- ENUMS ----------
 const ChoreStatusEnum = new GraphQLEnumType({
   name: "ChoreStatus",
@@ -62,6 +75,7 @@ const RoommateType = new GraphQLObjectType({
     name: { type: GraphQLString },
     email: { type: GraphQLString },
     color: { type: GraphQLString },
+    role: { type: GraphQLString },
     createdAt: { type: GraphQLString },
   }),
 });
@@ -133,56 +147,69 @@ const ShoppingItemType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
   fields: {
-    // Roommates
+    // Roommates — scoped to the logged-in user's household
     roommates: {
       type: new GraphQLList(RoommateType),
-      resolve() {
-        return Roommate.find();
+      resolve(parent, args, context) {
+        requireAuth(context);
+        return Roommate.find({ household: userHousehold(context) });
       },
     },
     roommate: {
       type: RoommateType,
       args: { id: { type: GraphQLID } },
-      resolve(parent, args) {
-        return Roommate.findById(args.id);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const roommate = await Roommate.findById(args.id);
+        assertSameHousehold(roommate, context, "Roommate");
+        return roommate;
       },
     },
 
-    // Chores
+    // Chores — scoped to the logged-in user's household
     chores: {
       type: new GraphQLList(ChoreType),
-      resolve() {
-        return Chore.find();
+      resolve(parent, args, context) {
+        requireAuth(context);
+        return Chore.find({ household: userHousehold(context) });
       },
     },
     chore: {
       type: ChoreType,
       args: { id: { type: GraphQLID } },
-      resolve(parent, args) {
-        return Chore.findById(args.id);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const chore = await Chore.findById(args.id);
+        assertSameHousehold(chore, context, "Chore");
+        return chore;
       },
     },
 
-    // Expenses
+    // Expenses — scoped to the logged-in user's household
     expenses: {
       type: new GraphQLList(ExpenseType),
-      resolve() {
-        return Expense.find();
+      resolve(parent, args, context) {
+        requireAuth(context);
+        return Expense.find({ household: userHousehold(context) });
       },
     },
     expense: {
       type: ExpenseType,
       args: { id: { type: GraphQLID } },
-      resolve(parent, args) {
-        return Expense.findById(args.id);
+      async resolve(parent, args, context) {
+        requireAuth(context);
+        const expense = await Expense.findById(args.id);
+        assertSameHousehold(expense, context, "Expense");
+        return expense;
       },
     },
 
-    // Shopping List
+    // Shopping List — scoped to the logged-in user's household
     shoppingItems: {
       type: new GraphQLList(ShoppingItemType),
-      resolve() {
-        return ShoppingItem.find();
+      resolve(parent, args, context) {
+        requireAuth(context);
+        return ShoppingItem.find({ household: userHousehold(context) });
       },
     },
   },
@@ -206,6 +233,7 @@ const RootMutation = new GraphQLObjectType({
           name: args.name,
           email: args.email,
           color: args.color,
+          household: userHousehold(context),
         });
         return roommate.save();
       },
@@ -214,8 +242,10 @@ const RootMutation = new GraphQLObjectType({
     deleteRoommate: {
       type: RoommateType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args, context) {
+      async resolve(parent, args, context) {
         requireAdmin(context);
+        const roommate = await Roommate.findById(args.id);
+        assertSameHousehold(roommate, context, "Roommate");
         return Roommate.findByIdAndDelete(args.id);
       },
     },
@@ -228,8 +258,11 @@ const RootMutation = new GraphQLObjectType({
         email: { type: GraphQLString },
         color: { type: GraphQLString },
       },
-      resolve(parent, args, context) {
+      async resolve(parent, args, context) {
         requireAdmin(context);
+        const roommate = await Roommate.findById(args.id);
+        assertSameHousehold(roommate, context, "Roommate");
+
         const updateFields = {};
         if (args.name !== undefined) updateFields.name = args.name;
         if (args.email !== undefined) updateFields.email = args.email;
@@ -264,6 +297,7 @@ const RootMutation = new GraphQLObjectType({
           dueDate: args.dueDate,
           recurring: args.recurring,
           createdBy: context.req.user._id,
+          household: userHousehold(context),
         });
         return chore.save();
       },
@@ -275,7 +309,7 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const chore = await Chore.findById(args.id);
-        if (!chore) throw new Error("Chore not found");
+        assertSameHousehold(chore, context, "Chore");
         const isAdmin = context.req.user.role === "admin";
         const isOwner = String(chore.createdBy) === String(context.req.user._id);
         if (!isAdmin && !isOwner) {
@@ -301,11 +335,11 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const chore = await Chore.findById(args.id);
-        if (!chore) throw new Error("Chore not found");
+        assertSameHousehold(chore, context, "Chore");
         const isAdmin = context.req.user.role === "admin";
         const isOwner = String(chore.createdBy) === String(context.req.user._id);
-        
-        // Members can only update the status of chores they did not create.
+
+        // Non-owners can only update status
         if (!isAdmin && !isOwner) {
           if (
             args.title !== undefined ||
@@ -352,6 +386,7 @@ const RootMutation = new GraphQLObjectType({
           amount: args.amount,
           paidBy: args.paidBy,
           splitBetween: args.splitBetween,
+          household: userHousehold(context),
         });
         return expense.save();
       },
@@ -363,7 +398,7 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const expense = await Expense.findById(args.id);
-        if (!expense) throw new Error("Expense not found");
+        assertSameHousehold(expense, context, "Expense");
         const isAdmin = context.req.user.role === "admin";
         const isOwner = String(expense.paidBy) === String(context.req.user._id);
         if (!isAdmin && !isOwner) {
@@ -387,7 +422,7 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const expense = await Expense.findById(args.id);
-        if (!expense) throw new Error("Expense not found");
+        assertSameHousehold(expense, context, "Expense");
         const isAdmin = context.req.user.role === "admin";
         const isOwner = String(expense.paidBy) === String(context.req.user._id);
         if (!isAdmin && !isOwner) {
@@ -420,7 +455,8 @@ const RootMutation = new GraphQLObjectType({
         requireAuth(context);
         const item = new ShoppingItem({
           name: args.name,
-          addedBy: args.addedBy,
+          addedBy: args.addedBy || context.req.user._id,
+          household: userHousehold(context),
         });
         return item.save();
       },
@@ -432,7 +468,7 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const item = await ShoppingItem.findById(args.id);
-        if (!item) throw new Error("Item not found");
+        assertSameHousehold(item, context, "Shopping item");
         const isAdmin = context.req.user.role === "admin";
         const isOwner = String(item.addedBy) === String(context.req.user._id);
         if (!isAdmin && !isOwner) {
@@ -450,7 +486,7 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const item = await ShoppingItem.findById(args.id);
-        if (!item) throw new Error("Item not found");
+        assertSameHousehold(item, context, "Shopping item");
         item.purchased = !item.purchased;
         return item.save();
       },
@@ -465,7 +501,7 @@ const RootMutation = new GraphQLObjectType({
       async resolve(parent, args, context) {
         requireAuth(context);
         const item = await ShoppingItem.findById(args.id);
-        if (!item) throw new Error("Item not found");
+        assertSameHousehold(item, context, "Shopping item");
         const isAdmin = context.req.user.role === "admin";
         const isOwner = String(item.addedBy) === String(context.req.user._id);
         if (!isAdmin && !isOwner) {

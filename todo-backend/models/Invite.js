@@ -25,6 +25,11 @@ const InviteSchema = new mongoose.Schema({
     ref: "Roommate",
     default: null,
   },
+  household: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Household",
+    required: true,
+  },
 });
 
 export const Invite = mongoose.model("Invite", InviteSchema);
