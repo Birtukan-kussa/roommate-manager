@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
-import AuthLayout from "@/app/(auth)/layout";
 
 const inputClass =
   "w-full rounded-md border border-[#DEDBD1] bg-white px-3.5 py-2.5 text-[14px] text-[#14181C] placeholder:text-[#A6A79C] outline-none transition focus:border-[#E2993C] focus:ring-2 focus:ring-[#E2993C]/25";
@@ -47,7 +46,7 @@ export default function LoginForm() {
   }
 
   return (
-    <AuthLayout>
+    <>
       <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B8C82]">
         Welcome back
       </p>
@@ -116,6 +115,6 @@ export default function LoginForm() {
           Sign up
         </Link>
       </p>
-    </AuthLayout>
+    </>
   );
 }
